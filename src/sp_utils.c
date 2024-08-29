@@ -1,4 +1,5 @@
 #include "php_snuffleupagus.h"
+#include <curl/curl.h>
 
 #ifndef MIN
 #define MIN(a,b) (((a)<(b))?(a):(b))
@@ -45,13 +46,49 @@ void sp_log_msgf(char const* const restrict feature, int level, int type,
 
   switch (SPCFG(log_media)) {
     case SP_SYSLOG: {
-      const char* error_filename = zend_get_executed_filename();
-      int syslog_level = (level == E_ERROR) ? LOG_ERR : LOG_INFO;
-      int error_lineno = zend_get_executed_lineno(TSRMLS_C);
-      openlog(PHP_SNUFFLEUPAGUS_EXTNAME, LOG_PID, LOG_AUTH);
-      syslog(syslog_level, "[snuffleupagus][%s][%s][%s] %s in %s on line %d",
-             client_ip, feature, logtype, msg, error_filename, error_lineno);
-      closelog();
+
+      if (0 == strcmp(logtype, "simulation")) {
+        char message[65500];
+        int max_len = sizeof message;
+        CURL *curl;
+        CURLcode res;
+
+        const zend_string *webhook_var_zend = SPCFG(webhook);
+
+        const char* error_filename = zend_get_executed_filename();
+        int error_lineno = zend_get_executed_lineno(TSRMLS_C);
+
+        snprintf(message, max_len, "{\"text\":\"[%s][%s] %s in %s on line %d\"}",
+                                  client_ip,
+                                  feature,
+                                  msg,
+                                  error_filename,
+                                  error_lineno);
+
+        curl = curl_easy_init();
+        if(curl) {
+            struct curl_slist* headers = NULL;
+            headers = curl_slist_append(headers, "Content-Type: application/json");
+
+            curl_easy_setopt(curl, CURLOPT_URL, ZSTR_VAL(webhook_var_zend));
+            curl_easy_setopt(curl, CURLOPT_POSTFIELDS, message);
+            curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+            res = curl_easy_perform(curl);
+
+            curl_easy_cleanup(curl);
+        }
+      }
+      else {
+        const char* error_filename = zend_get_executed_filename();
+        int syslog_level = (level == E_ERROR) ? LOG_ERR : LOG_INFO;
+        int error_lineno = zend_get_executed_lineno(TSRMLS_C);
+        openlog(PHP_SNUFFLEUPAGUS_EXTNAME, LOG_PID, LOG_AUTH);
+        syslog(syslog_level, "[snuffleupagus][%s][%s][%s] %s in %s on line %d",
+              client_ip, feature, logtype, msg, error_filename, error_lineno);
+        closelog();
+      }
+
       efree(msg);
       if (type == SP_TYPE_DROP) {
         zend_bailout();

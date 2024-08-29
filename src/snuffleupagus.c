@@ -107,6 +107,7 @@ static PHP_GINIT_FUNCTION(snuffleupagus) {
 #define SP_INIT_NULL(F) snuffleupagus_globals->F = NULL;
   SP_INIT_NULL(config_encryption_key);
   SP_INIT_NULL(config_cookies_env_var);
+  SP_INIT_NULL(config_webhook);
   SP_INIT_NULL(config_disabled_functions_reg.disabled_functions);
   SP_INIT_NULL(config_disabled_functions_reg_ret.disabled_functions);
   SP_INIT_NULL(config_cookie.cookies);
@@ -360,6 +361,7 @@ static void dump_config(void) {
   add_assoc_bool(&arr, SP_TOKEN_GLOBAL "." SP_TOKEN_ENCRYPTION_KEY, SPCFG(encryption_key) && ZSTR_LEN(SPCFG(encryption_key)));
   ADD_ASSOC_ZSTR(&arr, SP_TOKEN_GLOBAL "." SP_TOKEN_ENV_VAR, SPCFG(cookies_env_var));
   add_assoc_long(&arr, SP_TOKEN_GLOBAL "." SP_TOKEN_LOG_MEDIA, SPCFG(log_media));
+  ADD_ASSOC_ZSTR(&arr, SP_TOKEN_GLOBAL "." SP_TOKEN_WEBHOOK, SPCFG(webhook));
   add_assoc_long(&arr, SP_TOKEN_GLOBAL "." SP_TOKEN_LOG_MAX_LEN, SPCFG(log_max_len));
   add_assoc_long(&arr, SP_TOKEN_GLOBAL "." SP_TOKEN_MAX_EXECUTION_DEPTH, SPCFG(max_execution_depth));
   add_assoc_bool(&arr, SP_TOKEN_GLOBAL "." SP_TOKEN_SERVER_ENCODE, SPCFG(server_encode));

@@ -132,6 +132,7 @@ sp_config_wrapper config_wrapper;
 sp_config_session config_session;
 sp_config_ini config_ini;
 char config_log_media;
+zend_string *config_webhook;
 int config_log_max_len;
 u_long config_max_execution_depth;
 bool config_server_encode;
